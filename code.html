@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>桥梁检测云平台 | BridgeMonitor Cloud</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#e6f7ff',
+                            100: '#bae7ff',
+                            200: '#91d5ff',
+                            300: '#69c0ff',
+                            400: '#40a9ff',
+                            500: '#1890ff',
+                            600: '#096dd9',
+                            700: '#0050b3',
+                            800: '#003a8c',
+                            900: '#002766'
+                        },
+                        dark: {
+                            50: '#f2f3f5',
+                            100: '#e5e6eb',
+                            200: '#c9cdd4',
+                            300: '#a9aeb8',
+                            400: '#86909c',
+                            500: '#6b7280',
+                            600: '#4e5969',
+                            700: '#363f4d',
+                            800: '#1f2329',
+                            900: '#0d1117'
+                        },
+                        success: '#52c41a',
+                        warning: '#faad14',
+                        danger: '#f5222d'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0d1117;
+            color: #e5e6eb;
+        }
+        
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2329;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4e5969;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
+        }
+        
+        /* 玻璃态效果 */
+        .glass {
+            background: rgba(31, 35, 41, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        /* 卡片悬停效果 */
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 数据动画 */
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(0.9); }
+        }
+        .pulse-dot {
+            animation: pulse-dot 2s infinite;
+        }
+        
+        /* 图表容器 */
+        .chart-container {
+            position: relative;
+            width: 100%;
+        }
+        
+        /* 导航项激活状态 */
+        .nav-item.active {
+            background: linear-gradient(90deg, rgba(24, 144, 255, 0.15) 0%, rgba(24, 144, 255, 0) 100%);
+            border-left: 3px solid #1890ff;
+            color: #1890ff;
+        }
+        
+        /* 渐变背景 */
+        .gradient-bg {
+            background: linear-gradient(135deg, #0d1117 0%, #1f2329 100%);
+        }
+        
+        /* 数据卡片渐变 */
+        .data-card-1 {
+            background: linear-gradient(135deg, rgba(24, 144, 255, 0.1) 0%, rgba(24, 144, 255, 0.02) 100%);
+            border: 1px solid rgba(24, 144, 255, 0.2);
+        }
+        .data-card-2 {
+            background: linear-gradient(135deg, rgba(82, 196, 26, 0.1) 0%, rgba(82, 196, 26, 0.02) 100%);
+            border: 1px solid rgba(82, 196, 26, 0.2);
+        }
+        .data-card-3 {
+            background: linear-gradient(135deg, rgba(250, 173, 20, 0.1) 0%, rgba(250, 173, 20, 0.02) 100%);
+            border: 1px solid rgba(250, 173, 20, 0.2);
+        }
+        .data-card-4 {
+            background: linear-gradient(135deg, rgba(245, 34, 45, 0.1) 0%, rgba(245, 34, 45, 0.02) 100%);
+            border: 1px solid rgba(245, 34, 45, 0.2);
+        }
+        
+        /* 表格样式 */
+        .custom-table {
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        .custom-table th {
+            background-color: rgba(31, 35, 41, 0.8);
+            font-weight: 500;
+            color: #a9aeb8;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+        .custom-table tr {
+            transition: background-color 0.2s;
+        }
+        .custom-table tbody tr:hover {
+            background-color: rgba(24, 144, 255, 0.05);
+        }
+        
+        /* 状态标签 */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.625rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+        
+        /* 进度条 */
+        .progress-bar {
+            height: 6px;
+            border-radius: 3px;
+            background-color: rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 3px;
+            transition: width 0.5s ease;
+        }
+        
+        /* 地图标记动画 */
+        @keyframes ripple {
+            0% { transform: scale(0.8); opacity: 1; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+        .map-marker::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: 0.3;
+            animation: ripple 2s infinite;
+        }
+        
+        /* 侧边栏过渡 */
+        #sidebar {
+            transition: all 0.3s ease;
+        }
+        
+        /* 响应式调整 */
+        @media (max-width: 768px) {
+            #sidebar {
+                transform: translateX(-100%);
+            }
+            #sidebar.show {
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen">
+    <!-- 顶部导航栏 -->
+    <header class="glass fixed top-0 left-0 right-0 z-50 h-16 flex items-center px-6">
+        <div class="flex items-center justify-between w-full">
+            <!-- Logo和平台名称 -->
+            <div class="flex items-center space-x-4">
+                <button id="sidebar-toggle" class="text-dark-300 hover:text-white lg:hidden">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center">
+                        <i class="fas fa-bridge text-white text-lg"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-white">桥梁检测云平台</h1>
+                        <p class="text-xs text-dark-400">BridgeMonitor Cloud System</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 搜索栏 -->
+            <div class="hidden md:flex flex-1 max-w-md mx-8">
+                <div class="relative w-full">
+                    <input type="text" placeholder="搜索桥梁、设备或报告..." class="w-full bg-dark-800 border border-dark-700 rounded-lg py-2 pl-10 pr-4 text-sm text-white placeholder-dark-400 focus:outline-none focus:border-primary-500">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-dark-400 text-sm"></i>
+                </div>
+            </div>
+            
+            <!-- 右侧操作区 -->
+            <div class="flex items-center space-x-4">
+                <!-- 系统状态 -->
+                <div class="hidden md:flex items-center space-x-2 text-sm">
+                    <span class="w-2 h-2 bg-success rounded-full pulse-dot"></span>
+                    <span class="text-dark-300">系统运行正常</span>
+                </div>
+                
+                <!-- 通知 -->
+                <button class="relative p-2 text-dark-300 hover:text-white transition-colors">
+                    <i class="fas fa-bell text-lg"></i>
+                    <span class="absolute top-1 right-1 w-4 h-4 bg-danger text-white text-xs rounded-full flex items-center justify-center">3</span>
+                </button>
+                
+                <!-- 用户信息 -->
+                <div class="flex items-center space-x-3 cursor-pointer">
+                    <div class="w-9 h-9 rounded-full bg-gradient-to-br from-primary-400 to-primary-600 flex items-center justify-center text-white font-medium">
+                        李
+                    </div>
+                    <div class="hidden md:block">
+                        <p class="text-sm font-medium text-white">李工程师</p>
+                        <p class="text-xs text-dark-400">检测部门</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- 侧边栏 -->
+    <aside id="sidebar" class="glass fixed left-0 top-16 bottom-0 w-64 z-40 overflow-y-auto">
+        <nav class="p-4 space-y-1">
+            <!-- 导航项 -->
+            <a href="#" class="nav-item active flex items-center space-x-3 px-4 py-3 rounded-lg text-dark-300 hover:text-white hover:bg-dark-800 transition-colors">
+                <i class="fas fa-chart-line w-5"></i>
+                <span>数据概览</span>
+            </a>
+            <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-dark-300 hover:text-white hover:bg-dark-800 transition-colors">
+                <i class="fas fa-bridge w-5"></i>
+                <span>桥梁管理</span>
+            </a>
+            <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-dark-300 hover:text-white hover:bg-dark-800 transition-colors">
+                <i class="fas fa-satellite-dish w-5"></i>
+                <span>实时监测</span>
+            </a>
+            <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-dark-300 hover:text-white hover:bg-dark-800 transition-colors">
+                <i class="fas fa-exclamation-triangle w-5"></i>
+                <span>预警中心</span>
+                <span class="ml-auto bg-danger text-white text-xs px-2 py-0.5 rounded-full">5</span>
+            </a>
+            <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-dark-300 hover:text-white hover:bg-dark-800 transition-colors">
+                <i class="fas fa-clipboard-list w-5"></i>
+                <span>检测报告</span>
+            </a>
+            <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-dark-300 hover:text-white hover:bg-dark-800 transition-colors">
+                <i class="fas fa-microchip w-5"></i>
+                <span>设备管理</span>
+            </a>
+            <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-dark-300 hover:text-white hover:bg-dark-800 transition-colors">
+                <i class="fas fa-chart-bar w-5"></i>
+                <span>数据分析</span>
+            </a>
+            
+            <div class="pt-4 mt-4 border-t border-dark-700">
+                <p class="px-4 mb-2 text-xs text-dark-400 uppercase">系统设置</p>
+                <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-dark-300 hover:text-white hover:bg-dark-800 transition-colors">
+                    <i class="fas fa-users w-5"></i>
+                    <span>用户管理</span>
+                </a>
+                <a href="#" class="nav-item flex items-center space-x-3 px-4 py-3 rounded-lg text-dark-300 hover:text-white hover:bg-dark-800 transition-colors">
+                    <i class="fas fa-cog w-5"></i>
+                    <span>系统配置</span>
+                </a>
+            </div>
+        </nav>
+        
+        <!-- 系统信息 -->
+        <div class="p-4 mt-4">
+            <div class="glass rounded-lg p-4">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="text-sm text-dark-300">系统资源</span>
+                    <i class="fas fa-server text-primary-500"></i>
+                </div>
+                <div class="space-y-3">
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-dark-400">CPU使用率</span>
+                            <span class="text-white">32%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill bg-primary-500" style="width: 32%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-dark-400">内存使用</span>
+                            <span class="text-white">58%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill bg-success" style="width: 58%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-xs mb-1">
+                            <span class="text-dark-400">存储空间</span>
+                            <span class="text-white">45%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-bar-fill bg-warning" style="width: 45%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="ml-64 pt-16 p-6">
+        <!-- 页面标题 -->
+        <div class="mb-6 flex items-center justify-between">
+            <div>
+                <h2 class="text-2xl font-bold text-white">数据概览</h2>
+                <p class="text-sm text-dark-400 mt-1">实时监控桥梁结构健康状态 · 最后更新: 2024-01-15 14:32:08</p>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button class="px-4 py-2 bg-dark-800 hover:bg-dark-700 text-dark-200 rounded-lg text-sm transition-colors flex items-center space-x-2">
+                    <i class="fas fa-download"></i>
+                    <span>导出报告</span>
+                </button>
+                <button class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm transition-colors flex items-center space-x-2">
+                    <i class="fas fa-plus"></i>
+                    <span>添加桥梁</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 数据统计卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <!-- 桥梁总数 -->
+            <div class="data-card-1 rounded-xl p-5 card-hover">
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <p class="text-sm text-dark-400 mb-1">监测桥梁总数</p>
+                        <h3 class="text-3xl font-bold text-white">128</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-lg bg-primary-500 bg-opacity-20 flex items-center justify-center">
+                        <i class="fas fa-bridge text-primary-400 text-xl"></i>
+                    </div>
+                </div>
+                <div class="flex items-center text-xs">
+                    <span class="text-success flex items-center">
+                        <i class="fas fa-arrow-up mr-1"></i>12.5%
+                    </span>
+                    <span class="text-dark-400 ml-2">较上月</span>
+                </div>
+            </div>
+            
+            <!-- 在线设备 -->
+            <div class="data-card-2 rounded-xl p-5 card-hover">
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <p class="text-sm text-dark-400 mb-1">在线传感器</p>
+                        <h3 class="text-3xl font-bold text-white">2,847</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-lg bg-success bg-opacity-20 flex items-center justify-center">
+                        <i class="fas fa-microchip text-success text-xl"></i>
+                    </div>
+                </div>
+                <div class="flex items-center text-xs">
+                    <span class="text-success flex items-center">
+                        <i class="fas fa-arrow-up mr-1"></i>3.2%
+                    </span>
+                    <span class="text-dark-400 ml-2">在线率 98.6%</span>
+                </div>
+            </div>
+            
+            <!-- 预警数量 -->
+            <div class="data-card-3 rounded-xl p-5 card-hover">
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <p class="text-sm text-dark-400 mb-1">本月预警次数</p>
+                        <h3 class="text-3xl font-bold text-white">23</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-lg bg-warning bg-opacity-20 flex items-center justify-center">
+                        <i class="fas fa-exclamation-triangle text-warning text-xl"></i>
+                    </div>
+                </div>
+                <div class="flex items-center text-xs">
+                    <span class="text-danger flex items-center">
+                        <i class="fas fa-arrow-up mr-1"></i>8.7%
+                    </span>
+                    <span class="text-dark-400 ml-2">较上月</span>
+                </div>
+            </div>
+            
+            <!-- 待处理工单 -->
+            <div class="data-card-4 rounded-xl p-5 card-hover">
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        <p class="text-sm text-dark-400 mb-1">待处理工单</p>
+                        <h3 class="text-3xl font-bold text-white">5</h3>
+                    </div>
+                    <div class="w-12 h-12 rounded-lg bg-danger bg-opacity-20 flex items-center justify-center">
+                        <i class="fas fa-tasks text-danger text-xl"></i>
+                    </div>
+                </div>
+                <div class="flex items-center text-xs">
+                    <span class="text-dark-400">2个紧急 · 3个普通</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 图表区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <!-- 实时监测图表 -->
+            <div class="lg:col-span-2 glass rounded-xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">结构应力实时监测</h3>
+                        <p class="text-sm text-dark-400 mt-1">长江大桥 · 主跨中截面</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button class="px-3 py-1.5 text-xs bg-dark-800 text-dark-300 rounded-md hover:bg-dark-700">1小时</button>
+                        <button class="px-3 py-1.5 text-xs bg-primary-600 text-white rounded-md">24小时</button>
+                        <button class="px-3 py-1.5 text-xs bg-dark-800 text-dark-300 rounded-md hover:bg-dark-700">7天</button>
+                    </div>
+                </div>
+                <div class="chart-container" style="height: 300px;">
+                    <canvas id="stressChart"></canvas>
+                </div>
+                <div class="grid grid-cols-4 gap-4 mt-4 pt-4 border-t border-dark-700">
+                    <div>
+                        <p class="text-xs text-dark-400">最大应力</p>
+                        <p class="text-lg font-semibold text-white">145.3 <span class="text-xs text-dark-400">MPa</span></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-dark-400">最小应力</p>
+                        <p class="text-lg font-semibold text-white">82.6 <span class="text-xs text-dark-400">MPa</span></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-dark-400">平均应力</p>
+                        <p class="text-lg font-semibold text-white">112.8 <span class="text-xs text-dark-400">MPa</span></p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-dark-400">预警阈值</p>
+                        <p class="text-lg font-semibold text-warning">180.0 <span class="text-xs text-dark-400">MPa</span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 桥梁健康度分布 -->
+            <div class="glass rounded-xl p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">桥梁健康度分布</h3>
+                        <p class="text-sm text-dark-400 mt-1">全区域统计</p>
+                    </div>
+                </div>
+                <div class="chart-container" style="height: 200px;">
+                    <canvas id="healthChart"></canvas>
+                </div>
+                <div class="space-y-3 mt-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-3 h-3 rounded-full bg-success"></span>
+                            <span class="text-sm text-dark-300">优秀 (90-100)</span>
+                        </div>
+                        <span class="text-sm font-medium text-white">86座</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-3 h-3 rounded-full bg-primary-500"></span>
+                            <span class="text-sm text-dark-300">良好 (75-89)</span>
+                        </div>
+                        <span class="text-sm font-medium text-white">32座</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-3 h-3 rounded-full bg-warning"></span>
+                            <span class="text-sm text-dark-300">一般 (60-74)</span>
+                        </div>
+                        <span class="text-sm font-medium text-white">8座</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span class="w-3 h-3 rounded-full bg-danger"></span>
+                            <span class="text-sm text-dark-300">较差 (<60)</span>
+                        </div>
+                        <span class="text-sm font-medium text-white">2座</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 桥梁列表和地图 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+            <!-- 桥梁列表 -->
+            <div class="lg:col-span-2 glass rounded-xl overflow-hidden">
+                <div class="p-6 border-b border-dark-700">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-lg font-semibold text-white">重点监测桥梁</h3>
+                            <p class="text-sm text-dark-400 mt-1">实时状态更新</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <select class="bg-dark-800 border border-dark-700 text-dark-200 text-sm rounded-lg px-3 py-1.5 focus:outline-none focus:border-primary-500">
+                                <option>全部状态</option>
+                                <option>正常</option>
+                                <option>预警</option>
+                                <option>异常</option>
+                            </select>
+                            <button class="text-sm text-primary-400 hover:text-primary-300">查看全部</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="custom-table w-full">
+                        <thead>
+                            <tr>
+                                <th class="text-left px-6 py-3">桥梁名称</th>
+                                <th class="text-left px-6 py-3">类型</th>
+                                <th class="text-left px-6 py-3">健康度</th>
+                                <th class="text-left px-6 py-3">传感器</th>
+                                <th class="text-left px-6 py-3">状态</th>
+                                <th class="text-left px-6 py-3">最后检测</th>
+                                <th class="text-right px-6 py-3">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-dark-700">
+                            <tr>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 rounded-lg bg-primary-500 bg-opacity-20 flex items-center justify-center mr-3">
+                                            <i class="fas fa-bridge text-primary-400"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-white">长江大桥</p>
+                                            <p class="text-xs text-dark-400">BH-2024-001</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-dark-300">悬索桥</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="progress-bar w-20">
+                                            <div class="progress-bar-fill bg-success" style="width: 95%"></div>
+                                        </div>
+                                        <span class="text-sm text-white">95</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-dark-300">128/130</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="status-badge bg-success bg-opacity-20 text-success">
+                                        <span class="w-1.5 h-1.5 bg-success rounded-full mr-1.5"></span>
+                                        正常
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-dark-300">2分钟前</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <button class="text-primary-400 hover:text-primary-300 text-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 rounded-lg bg-warning bg-opacity-20 flex items-center justify-center mr-3">
+                                            <i class="fas fa-bridge text-warning"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-white">黄河二桥</p>
+                                            <p class="text-xs text-dark-400">BH-2024-002</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-dark-300">斜拉桥</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="progress-bar w-20">
+                                            <div class="progress-bar-fill bg-warning" style="width: 72%"></div>
+                                        </div>
+                                        <span class="text-sm text-white">72</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-dark-300">86/90</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="status-badge bg-warning bg-opacity-20 text-warning">
+                                        <span class="w-1.5 h-1.5 bg-warning rounded-full mr-1.5"></span>
+                                        预警
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-dark-300">5分钟前</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <button class="text-primary-400 hover:text-primary-300 text-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 rounded-lg bg-primary-500 bg-opacity-20 flex items-center justify-center mr-3">
+                                            <i class="fas fa-bridge text-primary-400"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-white">珠江特大桥</p>
+                                            <p class="text-xs text-dark-400">BH-2024-003</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-dark-300">梁桥</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="progress-bar w-20">
+                                            <div class="progress-bar-fill bg-success" style="width: 88%"></div>
+                                        </div>
+                                        <span class="text-sm text-white">88</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-dark-300">64/64</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="status-badge bg-success bg-opacity-20 text-success">
+                                        <span class="w-1.5 h-1.5 bg-success rounded-full mr-1.5"></span>
+                                        正常
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-dark-300">1分钟前</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <button class="text-primary-400 hover:text-primary-300 text-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 rounded-lg bg-danger bg-opacity-20 flex items-center justify-center mr-3">
+                                            <i class="fas fa-bridge text-danger"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-white">钱塘江大桥</p>
+                                            <p class="text-xs text-dark-400">BH-2024-004</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-dark-300">拱桥</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="progress-bar w-20">
+                                            <div class="progress-bar-fill bg-danger" style="width: 55%"></div>
+                                        </div>
+                                        <span class="text-sm text-white">55</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-dark-300">42/48</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="status-badge bg-danger bg-opacity-20 text-danger">
+                                        <span class="w-1.5 h-1.5 bg-danger rounded-full mr-1.5"></span>
+                                        异常
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-dark-300">刚刚</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <button class="text-primary-400 hover:text-primary-300 text-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 rounded-lg bg-primary-500 bg-opacity-20 flex items-center justify-center mr-3">
+                                            <i class="fas fa-bridge text-primary-400"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-white">东海跨海大桥</p>
+                                            <p class="text-xs text-dark-400">BH-2024-005</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-dark-300">悬索桥</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center space-x-2">
+                                        <div class="progress-bar w-20">
+                                            <div class="progress-bar-fill bg-success" style="width: 92%"></div>
+                                        </div>
+                                        <span class="text-sm text-white">92</span>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-dark-300">156/160</span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="status-badge bg-success bg-opacity-20 text-success">
+                                        <span class="w-1.5 h-1.5 bg-success rounded-full mr-1.5"></span>
+                                        正常
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="text-sm text-dark-300">3分钟前</span>
+                                </td>
+                                <td class="px-6 py-4 text-right">
+                                    <button class="text-primary-400 hover:text-primary-300 text-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- 地图视图 -->
+            <div class="glass rounded-xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">地理分布</h3>
+                        <p class="text-sm text-dark-400 mt-1">桥梁位置监控</p>
+                    </div>
+                    <button class="text-sm text-primary-400 hover:text-primary-300">
+                        <i class="fas fa-expand"></i>
+                    </button>
+                </div>
+                <div class="relative rounded-lg overflow-hidden" style="height: 350px; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);">
+                    <!-- 模拟地图 -->
+                    <div class="absolute inset-0 opacity-30">
+                        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+                            <defs>
+                                <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                                    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+                                </pattern>
+                            </defs>
+                            <rect width="100%" height="100%" fill="url(#grid)" />
+                            <!-- 模拟河流 -->
+                            <path d="M 0 150 Q 100 120 200 150 T 400 150" fill="none" stroke="rgba(24, 144, 255, 0.3)" stroke-width="20" />
+                            <path d="M 0 250 Q 150 220 300 250 T 600 250" fill="none" stroke="rgba(24, 144, 255, 0.2)" stroke-width="15" />
+                        </svg>
+                    </div>
+                    
+                    <!-- 地图标记 -->
+                    <div class="absolute" style="top: 30%; left: 25%;">
+                        <div class="map-marker relative w-4 h-4 bg-success rounded-full text-success cursor-pointer" title="长江大桥 - 正常">
+                            <span class="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-dark-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity">长江大桥</span>
+                        </div>
+                    </div>
+                    <div class="absolute" style="top: 45%; left: 40%;">
+                        <div class="map-marker relative w-4 h-4 bg-warning rounded-full text-warning cursor-pointer" title="黄河二桥 - 预警">
+                            <span class="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-dark-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity">黄河二桥</span>
+                        </div>
+                    </div>
+                    <div class="absolute" style="top: 60%; left: 55%;">
+                        <div class="map-marker relative w-4 h-4 bg-success rounded-full text-success cursor-pointer" title="珠江特大桥 - 正常">
+                            <span class="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-dark-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity">珠江特大桥</span>
+                        </div>
+                    </div>
+                    <div class="absolute" style="top: 35%; left: 60%;">
+                        <div class="map-marker relative w-4 h-4 bg-danger rounded-full text-danger cursor-pointer" title="钱塘江大桥 - 异常">
+                            <span class="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-dark-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity">钱塘江大桥</span>
+                        </div>
+                    </div>
+                    <div class="absolute" style="top: 70%; left: 30%;">
+                        <div class="map-marker relative w-4 h-4 bg-success rounded-full text-success cursor-pointer" title="东海跨海大桥 - 正常">
+                            <span class="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-dark-800 text-white text-xs px-2 py-1 rounded whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity">东海跨海大桥</span>
+                        </div>
+                    </div>
+                    
+                    <!-- 图例 -->
+                    <div class="absolute bottom-4 left-4 glass rounded-lg p-3">
+                        <div class="space-y-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="w-3 h-3 bg-success rounded-full"></span>
+                                <span class="text-xs text-dark-300">正常</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="w-3 h-3 bg-warning rounded-full"></span>
+                                <span class="text-xs text-dark-300">预警</span>
+                            </div>
+                            <div class="flex items-center space-x-2">
+                                <span class="w-3 h-3 bg-danger rounded-full"></span>
+                                <span class="text-xs text-dark-300">异常</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 预警信息和传感器状态 -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <!-- 最新预警 -->
+            <div class="glass rounded-xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">最新预警信息</h3>
+                        <p class="text-sm text-dark-400 mt-1">实时推送 · 自动分级</p>
+                    </div>
+                    <button class="text-sm text-primary-400 hover:text-primary-300">查看全部</button>
+                </div>
+                <div class="space-y-3">
+                    <!-- 预警项1 -->
+                    <div class="flex items-start space-x-3 p-3 bg-danger bg-opacity-10 border border-danger border-opacity-30 rounded-lg">
+                        <div class="w-8 h-8 rounded-lg bg-danger bg-opacity-20 flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-exclamation-circle text-danger text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm font-medium text-white">钱塘江大桥 - 应力超限</p>
+                                <span class="text-xs text-dark-400">刚刚</span>
+                            </div>
+                            <p class="text-xs text-dark-300 mt-1">主拱肋应力值达到 195.6MPa，超过预警阈值 180MPa</p>
+                            <div class="flex items-center space-x-3 mt-2">
+                                <span class="text-xs text-danger">紧急</span>
+                                <button class="text-xs text-primary-400 hover:text-primary-300">立即处理</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 预警项2 -->
+                    <div class="flex items-start space-x-3 p-3 bg-warning bg-opacity-10 border border-warning border-opacity-30 rounded-lg">
+                        <div class="w-8 h-8 rounded-lg bg-warning bg-opacity-20 flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-exclamation-triangle text-warning text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm font-medium text-white">黄河二桥 - 位移异常</p>
+                                <span class="text-xs text-dark-400">15分钟前</span>
+                            </div>
+                            <p class="text-xs text-dark-300 mt-1">主跨中点挠度位移 12.3mm，接近预警阈值</p>
+                            <div class="flex items-center space-x-3 mt-2">
+                                <span class="text-xs text-warning">重要</span>
+                                <button class="text-xs text-primary-400 hover:text-primary-300">查看详情</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 预警项3 -->
+                    <div class="flex items-start space-x-3 p-3 bg-warning bg-opacity-10 border border-warning border-opacity-30 rounded-lg">
+                        <div class="w-8 h-8 rounded-lg bg-warning bg-opacity-20 flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-wifi text-warning text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm font-medium text-white">黄河二桥 - 设备离线</p>
+                                <span class="text-xs text-dark-400">32分钟前</span>
+                            </div>
+                            <p class="text-xs text-dark-300 mt-1">传感器节点 SN-0892 离线超过30分钟</p>
+                            <div class="flex items-center space-x-3 mt-2">
+                                <span class="text-xs text-warning">一般</span>
+                                <button class="text-xs text-primary-400 hover:text-primary-300">查看详情</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 预警项4 -->
+                    <div class="flex items-start space-x-3 p-3 bg-primary-500 bg-opacity-10 border border-primary-500 border-opacity-30 rounded-lg">
+                        <div class="w-8 h-8 rounded-lg bg-primary-500 bg-opacity-20 flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-info-circle text-primary-400 text-sm"></i>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between">
+                                <p class="text-sm font-medium text-white">长江大桥 - 定期检测提醒</p>
+                                <span class="text-xs text-dark-400">1小时前</span>
+                            </div>
+                            <p class="text-xs text-dark-300 mt-1">距离上次定期检测已满6个月，建议安排检测</p>
+                            <div class="flex items-center space-x-3 mt-2">
+                                <span class="text-xs text-primary-400">提示</span>
+                                <button class="text-xs text-primary-400 hover:text-primary-300">安排检测</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 传感器状态 -->
+            <div class="glass rounded-xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="text-lg font-semibold text-white">传感器类型分布</h3>
+                        <p class="text-sm text-dark-400 mt-1">设备运行状态统计</p>
+                    </div>
+                    <button class="text-sm text-primary-400 hover:text-primary-300">设备管理</button>
+                </div>
+                <div class="chart-container mb-4" style="height: 200px;">
+                    <canvas id="sensorChart"></canvas>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="bg-dark-800 rounded-lg p-3">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-temperature-half text-primary-400"></i>
+                                <span class="text-sm text-dark-300">温度传感器</span>
+                            </div>
+                            <span class="text-xs text-success">98.5%</span>
+                        </div>
+                        <p class="text-lg font-semibold text-white">856 <span class="text-xs text-dark-400">/ 869</span></p>
+                    </div>
+                    <div class="bg-dark-800 rounded-lg p-3">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-compress-arrows-alt text-success"></i>
+                                <span class="text-sm text-dark-300">应变计</span>
+                            </div>
+                            <span class="text-xs text-success">99.2%</span>
+                        </div>
+                        <p class="text-lg font-semibold text-white">724 <span class="text-xs text-dark-400">/ 730</span></p>
+                    </div>
+                    <div class="bg-dark-800 rounded-lg p-3">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-arrows-left-right text-warning"></i>
+                                <span class="text-sm text-dark-300">位移传感器</span>
+                            </div>
+                            <span class="text-xs text-success">97.8%</span>
+                        </div>
+                        <p class="text-lg font-semibold text-white">485 <span class="text-xs text-dark-400">/ 496</span></p>
+                    </div>
+                    <div class="bg-dark-800 rounded-lg p-3">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-wind text-primary-400"></i>
+                                <span class="text-sm text-dark-300">风速仪</span>
+                            </div>
+                            <span class="text-xs text-success">100%</span>
+                        </div>
+                        <p class="text-lg font-semibold text-white">128 <span class="text-xs text-dark-400">/ 128</span></p>
+                    </div>
+                    <div class="bg-dark-800 rounded-lg p-3">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-camera text-success"></i>
+                                <span class="text-sm text-dark-300">视频监控</span>
+                            </div>
+                            <span class="text-xs text-warning">96.5%</span>
+                        </div>
+                        <p class="text-lg font-semibold text-white">356 <span class="text-xs text-dark-400">/ 369</span></p>
+                    </div>
+                    <div class="bg-dark-800 rounded-lg p-3">
+                        <div class="flex items-center justify-between mb-2">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-wave-square text-warning"></i>
+                                <span class="text-sm text-dark-300">振动传感器</span>
+                            </div>
+                            <span class="text-xs text-success">98.9%</span>
+                        </div>
+                        <p class="text-lg font-semibold text-white">298 <span class="text-xs text-dark-400">/ 301</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- 通知提示框 -->
+    <div id="notification" class="fixed bottom-6 right-6 z-50 hidden">
+        <div class="glass rounded-lg p-4 shadow-2xl border-l-4 border-primary-500 max-w-sm">
+            <div class="flex items-start space-x-3">
+                <div class="w-8 h-8 rounded-lg bg-primary-500 bg-opacity-20 flex items-center justify-center flex-shrink-0">
+                    <i class="fas fa-bell text-primary-400"></i>
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-medium text-white">新预警通知</p>
+                    <p class="text-xs text-dark-300 mt-1" id="notification-message">钱塘江大桥检测到应力超限，请及时处理</p>
+                </div>
+                <button onclick="closeNotification()" class="text-dark-400 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script>
+        // 侧边栏切换
+        document.getElementById('sidebar-toggle').addEventListener('click', function() {
+            document.getElementById('sidebar').classList.toggle('show');
+        });
+        
+        // 导航项点击
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+        
+        // 应力监测图表
+        const stressCtx = document.getElementById('stressChart').getContext('2d');
+        const stressData = [];
+        const stressLabels = [];
+        const now = new Date();
+        
+        for (let i = 23; i >= 0; i--) {
+            const time = new Date(now.getTime() - i * 60 * 60 * 1000);
+            stressLabels.push(time.getHours().toString().padStart(2, '0') + ':00');
+            stressData.push(90 + Math.random() * 50 + Math.sin(i / 3) * 20);
+        }
+        
+        new Chart(stressCtx, {
+            type: 'line',
+            data: {
+                labels: stressLabels,
+                datasets: [{
+                    label: '应力值 (MPa)',
+                    data: stressData,
+                    borderColor: '#1890ff',
+                    backgroundColor: 'rgba(24, 144, 255, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4,
+                    pointRadius: 0,
+                    pointHoverRadius: 5,
+                    pointHoverBackgroundColor: '#1890ff',
+                    pointHoverBorderColor: '#fff',
+                    pointHoverBorderWidth: 2
+                }, {
+                    label: '预警阈值',
+                    data: Array(24).fill(180),
+                    borderColor: '#faad14',
+                    borderWidth: 1.5,
+                    borderDash: [5, 5],
+                    fill: false,
+                    pointRadius: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
+                },
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            color: '#a9aeb8',
+                            font: { size: 12 },
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(31, 35, 41, 0.95)',
+                        titleColor: '#fff',
+                        bodyColor: '#a9aeb8',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        displayColors: true,
+                        usePointStyle: true
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#6b7280',
+                            font: { size: 11 }
+                        }
+                    },
+                    y: {
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#6b7280',
+                            font: { size: 11 },
+                            callback: function(value) {
+                                return value + ' MPa';
+                            }
+                        },
+                        min: 60,
+                        max: 200
+                    }
+                }
+            }
+        });
+        
+        // 健康度分布饼图
+        const healthCtx = document.getElementById('healthChart').getContext('2d');
+        new Chart(healthCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['优秀', '良好', '一般', '较差'],
+                datasets: [{
+                    data: [86, 32, 8, 2],
+                    backgroundColor: ['#52c41a', '#1890ff', '#faad14', '#f5222d'],
+                    borderColor: 'rgba(31, 35, 41, 0.8)',
+                    borderWidth: 3,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%',
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(31, 35, 41, 0.95)',
+                        titleColor: '#fff',
+                        bodyColor: '#a9aeb8',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.parsed + '座';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 传感器分布图
+        const sensorCtx = document.getElementById('sensorChart').getContext('2d');
+        new Chart(sensorCtx, {
+            type: 'bar',
+            data: {
+                labels: ['温度', '应变', '位移', '风速', '视频', '振动'],
+                datasets: [{
+                    label: '在线',
+                    data: [856, 724, 485, 128, 356, 298],
+                    backgroundColor: '#1890ff',
+                    borderRadius: 4,
+                    barPercentage: 0.6
+                }, {
+                    label: '离线',
+                    data: [13, 6, 11, 0, 13, 3],
+                    backgroundColor: '#f5222d',
+                    borderRadius: 4,
+                    barPercentage: 0.6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'top',
+                        labels: {
+                            color: '#a9aeb8',
+                            font: { size: 12 },
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(31, 35, 41, 0.95)',
+                        titleColor: '#fff',
+                        bodyColor: '#a9aeb8',
+                        borderColor: 'rgba(255,255,255,0.1)',
+                        borderWidth: 1,
+                        padding: 12
+                    }
+                },
+                scales: {
+                    x: {
+                        stacked: true,
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#6b7280',
+                            font: { size: 11 }
+                        }
+                    },
+                    y: {
+                        stacked: true,
+                        grid: {
+                            color: 'rgba(255, 255, 255, 0.05)',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            color: '#6b7280',
+                            font: { size: 11 }
+                        }
+                    }
+                }
+            }
+        });
+        
+        // 通知功能
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            document.getElementById('notification-message').textContent = message;
+            notification.classList.remove('hidden');
+            setTimeout(() => {
+                closeNotification();
+            }, 5000);
+        }
+        
+        function closeNotification() {
+            document.getElementById('notification').classList.add('hidden');
+        }
+        
+        // 模拟实时数据更新
+        setTimeout(() => {
+            showNotification('钱塘江大桥检测到应力超限，请及时处理');
+        }, 3000);
+        
+        // 模拟实时更新数据
+        setInterval(() => {
+            // 更新最后检测时间
+            const timeElements = document.querySelectorAll('td span.text-sm.text-dark-300:last-child');
+            // 这里可以添加实时数据更新逻辑
+        }, 5000);
+        
+        // 表格行点击事件
+        document.querySelectorAll('.custom-table tbody tr').forEach(row => {
+            row.style.cursor = 'pointer';
+            row.addEventListener('click', function() {
+                const bridgeName = this.querySelector('p.text-sm.font-medium.text-white').textContent;
+                showNotification(`正在加载 ${bridgeName} 的详细监测数据...`);
+            });
+        });
+    </script>
+</body>
+</html>
